@@ -3,8 +3,14 @@ import bs4
 from urllib.parse import urljoin
 import string
 import random
+import os
 
 url_ribuni = 'http://ribuni.uni.edu.ni/view/divisions/sch=5Fche/'
+
+directorio_base = os.path.join(os.getcwd(), 'docs')
+
+# Contiene los años que servirán como directorios para guardar los documentos.
+only_anios: list[str] = []
 
 # Obtiene en texto plano todo el contenido HTML del enlace establecido.
 def get_soup(url: str) -> bs4.BeautifulSoup | None:
@@ -36,6 +42,8 @@ def get_links_anios(soup: bs4.BeautifulSoup) -> list:
 
         if not is_anio:
             continue
+
+        only_anios.append(link_anio.split('.')[0])
 
         # Dado que link_anio sólo contiene la última parte de la URL, se debe completar.
         url_list.append(complete_url(link_anio))
@@ -83,8 +91,15 @@ def save_in_disk(url: str, anio: str | int):
     response = requests.get(url)
     
     random_name = generate_random_name()
-    
-    doc_uri = f'docs/{anio}/{random_name}.pdf'
+
+    ruta = os.path.join(directorio_base, anio)
+
+    # Verificar si el directorio existe
+    if not os.path.exists(ruta):
+        # Si no existe, crearlo
+        os.makedirs(ruta)
+
+    doc_uri = os.path.join(ruta, f'{random_name}.pdf')
     
     with open(doc_uri, 'wb') as file:
         file.write(response.content)
@@ -99,18 +114,16 @@ def generate_random_name(length = 10):
 if __name__ == '__main__':
     soup = get_soup(url_ribuni)
     links_anios = get_links_anios(soup)
-    
+
+    position = 0
+
     for anio in links_anios:
-        print(anio)
+        document_soup = get_soup(anio)
+        links_documents = get_links_documents(document_soup)
 
-    # index = 1
+        for document in links_documents:
+            pdf_soup = get_soup(document)
+            pdf_link = get_link_pdf(pdf_soup)
+            save_in_disk(pdf_link, only_anios[position])
 
-    # for anio in links_anios:
-    #     document_soup = get_soup(anio)
-    #     links_documents = get_links_documents(document_soup)
-
-    #     for document in links_documents:
-    #         pdf_soup = get_soup(document)
-    #         pdf_link = get_link_pdf(pdf_soup)
-    #         save_in_disk(pdf_link, index)
-    #         index = index + 1
+        position = position + 1
