@@ -77,7 +77,7 @@ def get_link_pdf(soup: bs4.BeautifulSoup) -> str | None:
             continue
 
         link_pdf: str = a_tag.get('href')
-        is_pdf: bool = link_pdf.endswith('.pdf')
+        is_pdf: bool = link_pdf.endswith('.pdf') or link_pdf.endswith('.PDF')
 
         if is_pdf:
             return link_pdf
@@ -116,6 +116,10 @@ if __name__ == '__main__':
     links_anios = get_links_anios(soup)
 
     position = 0
+    
+    if position > len(only_anios) - 1:
+        print(f'Aún no existe la posición {position} en el arreglo: {only_anios}')
+        exit()
 
     for anio in links_anios:
         document_soup = get_soup(anio)
