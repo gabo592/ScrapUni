@@ -103,18 +103,43 @@ def save_in_disk(url: str, anio: str | int):
     
     with open(doc_uri, 'wb') as file:
         file.write(response.content)
-        print(f'Se guardó existosamente el documento para el año: {anio}')
+        print(f'Se guardó exitosamente el documento para el año: {anio}')
+
+def save_in_disk(url: str) -> None:
+    if type(url) == type(None):
+        print(f'Esta url no es válida: {url}')
+        return
+    
+    response = requests.get(url)
+
+    random_name = generate_random_name()
+
+    if not os.path.exists(directorio_base):
+        os.makedirs(directorio_base)
+
+    doc_uri = os.path.join(directorio_base, f'{random_name}.pdf')
+
+    with open(doc_uri, 'wb') as file:
+        file.write(response.content)
+        print(f'Se guardó exitosamente el documento para la url: {url}')
         
 # Para evitar el reemplazo de los ficheros, se generará un nombre aleatorio de caracteres.
-def generate_random_name(length = 10):
+def generate_random_name(length = 10) -> str:
     caracteres = string.ascii_letters + string.digits
     random_name = ''.join(random.choice(caracteres) for _ in range(length))
     return random_name
 
-if __name__ == '__main__':
-    soup = get_soup(url_ribuni)
-    links_anios = get_links_anios(soup)
+def save_all(links_anios: list[str]) -> None:
+    for anio in links_anios:
+        document_soup = get_soup(anio)
+        links_documents = get_links_documents(document_soup)
 
+        for document in links_documents:
+            pdf_soup = get_soup(document)
+            pdf_link = get_link_pdf(pdf_soup)
+            save_in_disk(pdf_link)
+
+def save_by_year(links_anios: list[str]) -> None:
     position = 0
     
     if position > len(only_anios) - 1:
@@ -129,5 +154,9 @@ if __name__ == '__main__':
             pdf_soup = get_soup(document)
             pdf_link = get_link_pdf(pdf_soup)
             save_in_disk(pdf_link, only_anios[position])
-
         position = position + 1
+
+soup = get_soup(url_ribuni)
+links_anios = get_links_anios(soup)
+
+save_all(links_anios)
